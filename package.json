@@ -1,0 +1,18 @@
+{
+  "name": "integratedemo",
+  "version": "1.0.0",
+  "description": "demo integrating setup_intent and billings",
+  "main": "index.js",
+  "scripts": {
+    "start": "SK=sk_test_uxfq1VNyyqIXumwg1Yy2xal700gfyFndBL WHSK=whsec_a6ERqY13BL29Mwek9LBQcq80V0XmKhTA PORT=5003 nodemon ./index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "ejs": "^2.7.1",
+    "express": "^4.17.1",
+    "nodemon": "^1.19.3",
+    "stripe": "^7.9.1"
+  }
+}
