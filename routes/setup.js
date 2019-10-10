@@ -1,5 +1,4 @@
 const express = require('express');
-const path = require('path');
 
 const setupRoute = express.Router();
 const stripe = require("stripe")(process.env.SK);
@@ -21,5 +20,41 @@ setupRoute.post('/setup_intent', async (req, res) => {
     res.status(200).json(setupIntent);
 });
 
+//Step 2: Save card to customer
+setupRoute.post('/save_pm', async (req, res) => {
+    try {
+        let {
+            email,
+            pm
+        } = req.body;
+
+        let customer = await stripe.customers.list({
+            email
+        });
+        if (customer.data.length > 0) {
+            await stripe.paymentMethods.attach(pm, {
+                customer: customer.data[0].id
+            });
+            customer = await stripe.customers.update(customer.data[0].id, {
+                invoice_settings: {
+                    default_payment_method: pm,
+                }
+            });
+        } else {
+            customer = await stripe.customers.create({
+                email,
+                payment_method: pm,
+                invoice_settings: {
+                    default_payment_method: pm,
+                }
+            })
+        }
+        res.status(200).json(customer);
+    } catch (err) {
+        res.status(400).json({
+            err: `${err}`
+        });
+    }
+});
 
 module.exports = setupRoute;

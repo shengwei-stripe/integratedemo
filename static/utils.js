@@ -1,6 +1,6 @@
 const log = (msg) => {
     const date = new Date();
-    const timestamp = `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}.${date.getMilliseconds()}}`;
+    const timestamp = `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}.${date.getMilliseconds()}`;
 
     if ($('#logs')) {
         if (typeof msg === 'string') {

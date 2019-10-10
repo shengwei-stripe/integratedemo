@@ -1,10 +1,8 @@
 $(document).ready(async () => {
-
-    // Step 1: Retrieve Setup Intent 
-    let setupIntent = await postData('/setup/setup_intent');
-    $('#setup-intent-id').text(setupIntent.id);
-
-    // Step 2: Render the Elements
+    // ===============================
+    // Setup Intent 
+    // ===============================
+    // Step 1: Render the Elements
     const stripe = Stripe('pk_test_E18wxaJ00YkcOqsOZMh1HGLM');
     var elements = stripe.elements({});
     var style = {
@@ -36,163 +34,87 @@ $(document).ready(async () => {
         }
     });
 
-    // Step 3: Setup Card with card Information
+    // Step 2: Setup Card with card Information when submit button is clicked
     $('#setup-btn').on('click', async () => {
-        const cardSetupResult = await stripe.handleCardSetup(setupIntent.client_secret, cardElement);
-        log({cardSetupResult});
+        // Step 2.1: Create SetupIntent at server side
+        let {id: setupIntentId, client_secret: clientSecret} = await postData('/setup/setup_intent');
+        $('#setup-intent-id').text(setupIntentId);
+        
+        // Step 2.2: Call handleCardSetup to complete the setup
+        let {setupIntent, error} = await stripe.handleCardSetup(clientSecret, cardElement);
+        log({setupIntent, error});
+
+        // Step 2.3: Save the setup with payment_method
+        let customer = await postData('/setup/save_pm', {
+            customer: $('#customer-email').val(),
+            pm: setupIntent.payment_method,
+        });
+        log(customer);
+        $('#currentCustomer').val(`${customer.email}`);
     });
 
+    // ===============================
+    // Billings 
+    // ===============================
+    $('#load-plans-btn').on('click', async () => {
+        let plans = await getData('/billing/plans');
+        $('#plans').find('option')
+            .remove()
+            .end()
+            .append(new Option('Select plan to subscribe to', ''));
 
+        plans.forEach(p => {
+            $("#plans").append(new Option(`${p.product} - ${p.nickname}`, p.id));
+        });
+    });
 
+    $('#subscribe-to-plan-btn').on('click', async () => {
+        let plan = $( "select#plans" ).val();
+        if (!plan) {
+            return alert('Please select a plan to continue!');
+        }
+        
+        let customer = $('#currentCustomer').val();
+        if (!customer) {
+            return alert('Please enter customer email to continue!');
+        }
 
+        let subscription = await postData('/billing/subscribe', {
+            plan, customer
+        });
 
+        // Handle Subscription Status
+        $('#subscription-id').text(subscription.id);
+        $('#subscription-status').text(subscription.status);
+        handleSubscriptionStatus(subscription);
+    });
 
+    const handleSubscriptionStatus = async (sub) => {
+        if (sub.status === 'incomplete') {
+            // Check the latest_invoice.payment_intent status
+            $('#invoice-pi-status').text(sub.latest_invoice.payment_intent.status);
+            switch (sub.latest_invoice.payment_intent.status) {
+                case 'requires_action':
+                    await stripe.handleCardPayment(sub.latest_invoice.payment_intent.client_secret);
+                    break;
+                case 'requires_payment_method':
+                    break;
+            }
+
+            // Refresh the subscription status
+            sub = await getData(`/billing/subscription/${sub.id}`);
+            $('#subscription-status').text(sub.status);
+            $('#invoice-pi-status').text(sub.latest_invoice.payment_intent.status);
+        } else {
+            alert('Subscription created!!');
+        }
+    };
 
 
 });
 
 
-// const log = (msg) => {
-//     const date = new Date();
-//     const timestamp = `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}.${date.getMilliseconds()}}`;
 
-//     if (typeof msg === 'string') {
-//         $('#logs').append(`<br/>//[${timestamp}] ${msg} ...<br/>`);
-//     } else {
-//         $('#logs').append(`//[${timestamp}] Result: <br/>`);
-//         $('#logs').append(JSON.stringify(msg, null, 3));
-//     }
-//     $("#logs").animate({
-//         scrollTop: $('#logs').prop("scrollHeight")
-//     }, 400);
-// };
-
-
-// const stripe = Stripe('pk_test_E18wxaJ00YkcOqsOZMh1HGLM');
-
-// var currentPI = null;
-// $(document).ready(async () => {
-//     const queries = window.location.search.replace('?', '').split('&').reduce((result, q) => {
-//         const [name, value] = q.split('=');
-//         result[name] = value;
-//         return result;
-//     }, {});
-
-//     // Frontend Only integration
-//     // Step 1; Create PaymentIntent
-//     $.post('/sca/payment_intent')
-//         .done(function (data) {
-//             log(data);
-//             $('#payment-submit-btn').attr('data-secret', data.client_secret);
-//             $('#payment-submit-btn').prop('disabled', false);
-//             currentPI = data.id;
-//         })
-//         .fail(function (err) {
-//             log(err);
-//             $('#payment-submit-btn').prop('disabled', true);
-//         })
-
-
-
-//     // Step 2: Collect PaymentInformation
-//     var elements = stripe.elements({});
-//     var style = {
-//         base: {
-//             color: '#474747',
-//             lineHeight: '20px',
-//             fontFamily: '"SourceSansProLight", Arial, sans-serif',
-//             fontSmoothing: 'antialiased',
-//             fontSize: '18px',
-//             '::placeholder': {
-//                 color: '#A9A9A9'
-//             }
-//         },
-//         invalid: {
-//             color: '#fa755a',
-//             iconColor: '#fa755a'
-//         }
-//     };
-
-//     // Create an instance of the card Element.
-//     var cardElement = elements.create('card', {
-//         style: style
-//     });
-
-//     // Add an instance of the card Element into the card-element <div>.
-//     cardElement.mount('#card-element');
-
-//     // Handle real-time validation errors from the card Element.
-//     cardElement.addEventListener('change', function (event) {
-//         console.log('Elements Change Event ', event);
-
-//         var displayError = document.getElementById('card-errors');
-//         var submitButton = document.getElementById('payment-submit-btn');
-//         if (event.error) {
-//             displayError.textContent = event.error.message;
-//             submitButton.setAttribute("disabled", "disabled");
-//         } else if (event.brand === 'amex') {
-//             displayError.textContent = 'Amex is not supported';
-//             // submitButton.setAttribute("disabled", "disabled");
-//         } else {
-//             displayError.textContent = '';
-//             submitButton.removeAttribute("disabled");
-//         }
-//     });
-
-//     var pendingSetupIntent = null;
-//     const handleSetupResult = (result) => {
-//         const {
-//             error,
-//             setup_intent
-//         } = result;
-//         if (error) {
-//             log('======= Setup Failed ======');
-//             pendingSetupIntent = result.error.setup_intent;
-//             alert(`Setup failed due to ${result.error.message}. Please try another card`);
-//             return false;
-//         }
-
-//         $.post(`/sca/customer/${result.setupIntent.payment_method}`)
-//             .done(customer => {
-//                 log(customer)
-//             })
-//             .fail(err => {
-//                 log(err)
-//             });
-//         return true;
-//     }
-
-//     $('#setup-btn').on('click', async () => {
-//         if (pendingSetupIntent) {
-//             switch (pendingSetupIntent.status) {
-//                 case 'requires_payment_method':
-//                 case 'requires_action':
-//                     const result = await stripe.handleCardSetup(pendingSetupIntent
-//                         .client_secret, cardElement);
-//                     log(result);
-//                     handleSetupResult(result);
-//                     break;
-//                 default:
-//                     log('Clearing the setup intent and create a new one');
-//                     pendingSetupIntent = null;
-//                     break;
-//             }
-//         }
-
-//         $.post('/sca/setup_intent')
-//             .done(async (data) => {
-//                 log('Setup Intent Created');
-//                 log(data);
-//                 const result = await stripe.handleCardSetup(data.client_secret,
-//                     cardElement);
-//                 log(result);
-//                 handleSetupResult(result);
-//             })
-//             .fail(function (err) {
-//                 log(err);
-//             })
-
-//     });
 
 
 //     if (queries.payment_intent && queries.payment_intent_client_secret) {

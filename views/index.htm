@@ -19,7 +19,7 @@
                 <div>
                     <div>
                         <label for="card-element">
-                            Enter Credit or debit card you want to setup and save to customer
+                            Enter Credit or debit card you want to setup:
                         </label>
                         <p id="current-pi"></p>
                         <div id="card-element">
@@ -28,45 +28,40 @@
                     </div>
                     <div id="error" class="alert alert-warning">
                     </div>
+                    <label>Enter customer email to save card to:
+                        <input type="text" id="customer-email" placeholder="customer-email@example.com" />
+                    </label>
                     <button id="setup-btn" class="button disabled">Setup Card</button>
                     <pre>
 1. Testing Card 
 3DS v2 Card: 4000000000003220
 3DS v1 Card: 4000000000003063 
 SCA Setup Card: 4000002500003155
-SCA Insufficient fund: 4000008260003178 
+SCA Insufficient fund: 4000008260003178
+3DS Supported Card: 4242424242424242
 https://stripe.com/docs/testing
 
                     </pre>
                     <br><br><br>
-                    <h4>SCA Billing</h4>
-                    <button id="sub-onsession" class="btn btn-primary">Subscribe on Session</button>
-                    <div class="form-check" style="margin: 10px 0px">
-                        <input class="form-check-input" type="checkbox" value="subtrial" id="createTrialSub" />
-                        <label for="createTrialSub">
-                            Click to create a 7 days trial Subscription, Simulating sinario 2.
-                        </label>
-                        <button id="sub-endtrial" class="btn btn-secondary">End subscription trial</button>
-                    </div>
+                    <h4>Billing with API</h4>
+                    <hr>
+                    
+                    <select id="plans">Select Plan
+                        <option value="">Select plan to subscribe to</option>
+                    </select>
+                    <input type="text" id="currentCustomer" placeholder="Enter Customer Email to subscribe to" />
+                    <button id="load-plans-btn" class="button">Load Plans</button>
+                    <button id="subscribe-to-plan-btn" class="button">Subscribe</button>
+                    
+                    <label>Subscription ID: <span id='subscription-id'></span></label>
+                    <label>Subscription Status: <span class="round alert label" id='subscription-status'></span></label>
+                    <label>Subscription Invoice PI Status: <span class="round alert label" id='invoice-pi-status'></span></label>
 
 
-                    <div id="sub-failure">
-                        <div>
-                            <label for="sub-card-element">
-                                Credit or debit card
-                            </label>
-                            <p id="current-pi"></p>
-                            <div id="sub-card-element">
-                                <!-- A Stripe Element will be inserted here. -->
-                            </div>
 
-                            <!-- Used to display form errors. -->
-                            <div id="sub-errors" role="alert"></div>
-                        </div>
-                        <div id="sub-error" class="alert alert-warning">
-                        </div>
-                        <button id='subscribe-btn' class="common-Button btn btn-primary">Subscribe</button>
-                    </div>
+                    <hr>                    
+                    <h4>Billing with Stripe Checkout</h4>
+                    <button id="checkout-btn" class="button">Checkout</button>
                 </div>
 
             </div>
