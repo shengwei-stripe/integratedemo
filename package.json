@@ -4,7 +4,7 @@
   "description": "demo integrating setup_intent and billings",
   "main": "index.js",
   "scripts": {
-    "start": "SK=sk_test_uxfq1VNyyqIXumwg1Yy2xal700gfyFndBL PK=pk_test_E18wxaJ00YkcOqsOZMh1HGLM WHSK=whsec_a6ERqY13BL29Mwek9LBQcq80V0XmKhTA PORT=5003 nodemon ./index.js"
+    "start": "SK= PK= WHSK= PORT= nodemon ./index.js"
   },
   "author": "",
   "license": "ISC",
