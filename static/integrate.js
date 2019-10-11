@@ -77,7 +77,39 @@ $(document).ready(async () => {
         });
     });
 
+    var pendingSubscription = null; 
+
     $('#subscribe-to-plan-btn').on('click', async () => {
+        if (pendingSubscription) {
+            let {
+                id: setupIntentId,
+                client_secret: clientSecret
+            } = await postData('/setup/setup_intent');
+            $('#setup-intent-id').text(setupIntentId);
+            let {
+                setupIntent,
+                error
+            } = await stripe.handleCardSetup(clientSecret, cardElement);
+            log({
+                setupIntent,
+                error
+            });
+
+            // Pay the invoice with new card, 
+            await postData('/billing/pay', {
+                customer: pendingSubscription.latest_invoice.customer,
+                invoice: pendingSubscription.latest_invoice.id,
+                pm: setupIntent.payment_method,
+            });
+            
+            let sub = await getData(`/billing/subscription/${pendingSubscription.id}`);
+            $('#subscription-status').text(sub.status);
+            $('#invoice-pi-status').text(sub.latest_invoice.payment_intent.status);
+            pendingSubscription = null; // Just try it for once.
+            return;
+        }
+
+
         let plan = $("select#plans").val();
         if (!plan) {
             return alert('Please select a plan to continue!');
@@ -108,7 +140,9 @@ $(document).ready(async () => {
                     await stripe.handleCardPayment(sub.latest_invoice.payment_intent.client_secret);
                     break;
                 case 'requires_payment_method':
-                    break;
+                    // Payment Failed, Update the payment_method
+                    pendingSubscription = sub;
+                    return alert('Payment failed, please enter another card on top and click Subscribe again.');
             }
 
             // Refresh the subscription status

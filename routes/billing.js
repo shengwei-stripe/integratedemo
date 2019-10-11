@@ -57,10 +57,43 @@ billingRoute.post('/subscribe', async (req, res) => {
             items: [{
                 plan
             }],
+            off_session: true, // Try the differences on off_session and see how it goes
             expand: ['latest_invoice.payment_intent', 'pending_setup_intent'],
         });
 
         res.status(200).json(subscription);
+    } catch (err) {
+        res.status(400).json({
+            err: `${err}`
+        })
+    }
+});
+
+billingRoute.post('/pay', async (req, res) => {
+    try {
+        const {
+            customer,
+            pm,
+            invoice,
+        } = req.body;
+
+        // Update customer with new Card 
+        await stripe.paymentMethods.attach(pm, {
+            customer
+        });
+        let updatedCustomer = await stripe.customers.update(customer, {
+            invoice_settings: {
+                default_payment_method: pm,
+            }
+        });
+
+        // Pay the invoice 
+        const paidInvoice = await stripe.invoices.pay(invoice, {
+            off_session: true,
+            expand: ['payment_intent']
+        })
+
+        res.status(200).json({updatedCustomer, paidInvoice});
     } catch (err) {
         res.status(400).json({
             err: `${err}`
