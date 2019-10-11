@@ -4,27 +4,10 @@ $(document).ready(async () => {
     // ===============================
     // Step 1: Render the Elements
     const stripe = Stripe($('#pk').val());
-    var elements = stripe.elements({});
-    var style = {
-        base: {
-            color: '#474747',
-            lineHeight: '20px',
-            fontFamily: '"SourceSansProLight", Arial, sans-serif',
-            fontSmoothing: 'antialiased',
-            fontSize: '18px',
-            '::placeholder': {
-                color: '#A9A9A9'
-            }
-        },
-        invalid: {
-            color: '#fa755a',
-            iconColor: '#fa755a'
-        }
-    };
-    var cardElement = elements.create('card', {
-        style: style
-    });
-    cardElement.mount('#card-element');
+
+    var elements = null;
+    var cardElement = {addEventListener: () => {}};
+    
     cardElement.addEventListener('change', (event) => {
         $('#card-errors').text(event.error ? event.error.message : '');
         if (event.error) {
@@ -40,24 +23,24 @@ $(document).ready(async () => {
         let {
             id: setupIntentId,
             client_secret: clientSecret
-        } = await postData('/setup/setup_intent');
+        } = {};
+
         $('#setup-intent-id').text(setupIntentId);
 
         // Step 2.2: Call handleCardSetup to complete the setup
         let {
             setupIntent,
             error
-        } = await stripe.handleCardSetup(clientSecret, cardElement);
+        } = {};
+
         log({
             setupIntent,
             error
         });
 
         // Step 2.3: Save the setup with payment_method
-        let customer = await postData('/setup/save_pm', {
-            customer: $('#customer-email').val(),
-            pm: setupIntent.payment_method,
-        });
+        let customer = {};
+
         log(customer);
         $('#currentCustomer').val(`${customer.email}`);
     });
@@ -103,13 +86,9 @@ $(document).ready(async () => {
         if (sub.status === 'incomplete') {
             // Check the latest_invoice.payment_intent status
             $('#invoice-pi-status').text(sub.latest_invoice.payment_intent.status);
-            switch (sub.latest_invoice.payment_intent.status) {
-                case 'requires_action':
-                    await stripe.handleCardPayment(sub.latest_invoice.payment_intent.client_secret);
-                    break;
-                case 'requires_payment_method':
-                    break;
-            }
+            
+            // Handle Subscription payment_intent status;
+            
 
             // Refresh the subscription status
             sub = await getData(`/billing/subscription/${sub.id}`);
@@ -123,14 +102,7 @@ $(document).ready(async () => {
 
     // Checkout Button creating subscriptions
     $('#checkout-btn').on('click', () => {
-        stripe.redirectToCheckout({
-            items: [{
-                plan: 'plan_Fu2ftJ29CQ6OxR',
-                quantity: 1
-            }],
-            successUrl: `http://localhost:${process.env.PORT}/`,
-            cancelUrl: `http://localhost:${process.env.PORT}/`,
-        });
+        
     });
 
 });

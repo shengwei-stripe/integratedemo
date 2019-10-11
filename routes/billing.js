@@ -52,13 +52,7 @@ billingRoute.post('/subscribe', async (req, res) => {
             throw new Error('Customer does not exists. Please setup a card first.');
         }
 
-        const subscription = await stripe.subscriptions.create({
-            customer: customer.data[0].id,
-            items: [{
-                plan
-            }],
-            expand: ['latest_invoice.payment_intent', 'pending_setup_intent'],
-        });
+        const subscription = null;
 
         res.status(200).json(subscription);
     } catch (err) {
