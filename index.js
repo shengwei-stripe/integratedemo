@@ -29,7 +29,7 @@ app.use('/setup', setupRoute);
 app.use('/billing', billingRoute);
 
 app.get('/*', (req, res) => {
-  res.render('index.htm');
+  res.render('index.htm', {pk: process.env.PK});
 });
 
 app.listen(process.env.PORT || 5003, () => {
